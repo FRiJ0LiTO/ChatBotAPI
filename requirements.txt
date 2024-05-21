@@ -8,8 +8,8 @@ pyjwt
 "passlib[bcrypt]"
 pytest
 pydantic
-bson
 motor
 bs4
 pdfminer-six
 chromadb
+pymongo
