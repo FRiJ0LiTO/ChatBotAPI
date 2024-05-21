@@ -2,7 +2,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.encoders import jsonable_encoder
 import os
 from models import Question
-from bson import ObjectId
 from own_gpt import model_response
 from dotenv import load_dotenv
 
