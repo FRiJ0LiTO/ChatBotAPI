@@ -60,8 +60,10 @@ async def get_response(user_id: str):
         # Update the question with the new answer
         await questions_collection.update_one(query, new_values)
 
-        return {"response": chat_response,
-                "question": user_question["question"]}
+        return {"_id": user_question_id,
+                "response": chat_response,
+                "question": user_question["question"],
+                "userId": user_id}
     except Exception as e:
         return str(e)
 
