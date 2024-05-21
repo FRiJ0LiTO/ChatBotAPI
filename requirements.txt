@@ -1,0 +1,15 @@
+langchain-community
+faiss-cpu
+langchain-openai
+tiktoken
+langchain
+fastapi
+pyjwt
+"passlib[bcrypt]"
+pytest
+pydantic
+bson
+motor
+bs4
+pdfminer-six
+chromadb
