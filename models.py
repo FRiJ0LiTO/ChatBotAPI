@@ -1,28 +1,26 @@
 import uuid
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import List
 from datetime import datetime
 
 
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
-    name: str = Field(...)
-    email: str = Field(...)
+    username: str = Field(...)
+    password: str = Field(...)
+    email: EmailStr = Field(...)
     country: str = Field(...)
     state: str = Field(...)
-    preguntasId: List[str] = Field([], description="Lista de IDs de preguntas asociadas al usuario")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "_id": "066de609-b04a-4b30-b46c-32537c7f1f6e",
-                "name": "Juan",
+                "username": "Juan",
+                "password": "password",
                 "email": "juan@gmail.com",
                 "country": "Mexico",
                 "state": "CDMX",
-                "preguntasId": ["066de609-b04a-4b30-b46c-32537c7f1f6e",
-                                "066de609-b04a-4b30-b46c-32537c7f1f6e"]
             }
         }
 
