@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body, HTTPException, status, File, UploadFile
-from models import Question
-from database import create_question, get_response, get_user_questions
+from models import User, Question
+from database import create_user, get_all_users, create_question, get_response, get_user_questions
 import os
 import shutil
 from bson import ObjectId
@@ -11,6 +11,16 @@ router = APIRouter()
 @router.get("/")
 async def root():
     return {"message": "Welcome"}
+
+
+@router.post("/register")
+async def register_user(user: User = Body(...)):
+    return await create_user(user)
+
+
+@router.get("/users")
+async def get_users():
+    return await get_all_users()
 
 
 @router.post("/question")
