@@ -1,11 +1,13 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.encoders import jsonable_encoder
 import os
-from models import Question
+from models import User, Question
 from own_gpt import model_response
 from dotenv import load_dotenv
+from passlib.context import CryptContext
 
 load_dotenv()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 client_url = os.getenv('ATLAS_URI')
 database_name = os.getenv('DB_NAME')
@@ -15,6 +17,51 @@ client = AsyncIOMotorClient(client_url)
 database = client[database_name]
 questions_collection = database["questions"]
 users_collection = database["neoris"]
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+async def create_user(user: User):
+    """
+
+    :param user:
+    :return:
+    """
+    try:
+        # Hash the password
+        user.password = get_password_hash(user.password)
+        # Insert the user into the database, collection "neoris"
+        await users_collection.insert_one(jsonable_encoder(user))
+
+        return user
+    except Exception as e:
+        return str(e)
+
+
+async def get_all_users():
+    """
+    Method to get all the questions and answers from a user
+    :return: A list with all the questions and answers from the user
+    """
+    try:
+        users_dict = {}
+        cursor = await users_collection.find().to_list(length=None)
+
+        for user in cursor:
+            users_dict[user["username"]] = {
+                "_id": user["_id"],
+                "username": user["username"],
+                "password": user["password"],
+                "email": user["email"],
+                "country": user["country"],
+                "state": user["state"],
+            }
+
+        return users_dict
+    except Exception as e:
+        return str(e)
 
 
 async def create_question(question: Question):
