@@ -1,10 +1,11 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.encoders import jsonable_encoder
 import os
-from models import User, Question
+from models import User, Question, FrequentlyAskedQuestion, EditQuestion
 from own_gpt import model_response
 from dotenv import load_dotenv
 from passlib.context import CryptContext
+from pymongo.errors import PyMongoError
 
 load_dotenv()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -17,6 +18,7 @@ client = AsyncIOMotorClient(client_url)
 database = client[database_name]
 questions_collection = database["questions"]
 users_collection = database["neoris"]
+faq_collection = database["faq"]
 
 
 def get_password_hash(password):
@@ -25,9 +27,9 @@ def get_password_hash(password):
 
 async def create_user(user: User):
     """
-
-    :param user:
-    :return:
+    Method to create a new user
+    :param user: User to be created
+    :return: User created
     """
     try:
         # Hash the password
@@ -51,7 +53,7 @@ async def get_all_users():
 
         for user in cursor:
             users_dict[user["username"]] = {
-                "_id": user["_id"],
+                "id": user["_id"],
                 "username": user["username"],
                 "password": user["password"],
                 "email": user["email"],
@@ -133,3 +135,75 @@ async def get_user_questions(user_id: str):
         return history
     except Exception as e:
         return str(e)
+
+
+async def get_all_faq():
+    """
+
+    :return:
+    """
+    try:
+        all_faq = []
+        cursor = await faq_collection.find().to_list(length=None)
+
+        for question in cursor:
+            question['_id'] = str(
+                question['_id'])  # Convert ObjectId to string
+            all_faq.append(question)
+
+        return all_faq
+    except Exception as e:
+        return str(e)
+
+
+async def create_faq(faq: FrequentlyAskedQuestion):
+    """
+    Creates a new FAQ document in the collection.
+
+    :param faq: The FAQ object to be created.
+    :return: The created FAQ object or an error message.
+    """
+    try:
+        await faq_collection.insert_one(jsonable_encoder(faq))
+        return faq
+    except PyMongoError as e:
+        return {"error": str(e)}
+
+
+async def update_faq(faq_id: str, faq: EditQuestion):
+    """
+    Updates an existing FAQ document with new data.
+    :param faq_id: The ID of the FAQ to be updated.
+    :param faq: The new FAQ data.
+    :return: The update result or an error message.
+    """
+    try:
+        query = {"_id": faq_id}
+        new_faq = jsonable_encoder(faq)
+        new_values = {
+            "$set": {"question": new_faq["question"], "answer": new_faq["answer"]}
+        }
+        response = await faq_collection.update_one(query, new_values)
+        if response.matched_count == 0:
+            return {"error": "FAQ not found"}
+        return {"message": f"FAQ with ID {faq_id} updated successfully"}
+    except PyMongoError as e:
+        return {"error": str(e)}
+
+
+async def delete_faq(faq_id: str):
+    """
+    Deletes an existing FAQ document.
+
+    :param faq_id: The ID of the FAQ to be deleted.
+    :return: The delete result or an error message.
+    """
+    try:
+        query = {"_id": faq_id}
+        response = await faq_collection.delete_one(query)
+        if response.deleted_count == 0:
+            return {"error": "FAQ not found"}
+        return {"message": f"FAQ with ID {faq_id} deleted successfully"}
+    except PyMongoError as e:
+        return {"error": str(e)}
+
