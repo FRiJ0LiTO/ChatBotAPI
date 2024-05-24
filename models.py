@@ -36,7 +36,33 @@ class Question(BaseModel):
         json_schema_extra = {
             "example": {
                 "question": "What is NEORIS?",
-                "userId": "82d00a97-d923-4c5a-bc8e-e1684eff66a9"
+                "userId": "9739f411-76c8-4260-9217-a8b4b32b299a"
             }
         }
 
+
+class FrequentlyAskedQuestion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
+    question: str = Field(...)
+    answer: str = Field(...)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "question": "What is NEORIS?",
+                "answer": "NEORIS is a global business and IT consulting company"
+            }
+        }
+
+
+class EditQuestion(BaseModel):
+    question: str = Field(...)
+    answer: str = Field(...)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "question": "What is NEORIS?",
+                "answer": "NEORIS is a global business and IT consulting company"
+            }
+        }
