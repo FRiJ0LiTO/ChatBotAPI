@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Body, HTTPException, status, File, UploadFile
-from models import User, Question
-from database import create_user, get_all_users, create_question, get_response, get_user_questions
+from models import User, Question, FrequentlyAskedQuestion
+from database import (create_user, get_all_users, create_question, get_response,
+                      get_user_questions, get_all_faq, create_faq, update_faq,
+                      delete_faq)
 import os
 import shutil
 from bson import ObjectId
@@ -36,6 +38,26 @@ async def get_user_response(user_id: str):
 @router.get("/history/{user_id}")
 async def get_history(user_id: str):
     return await get_user_questions(user_id)
+
+
+@router.get("/faqs/")
+async def get_faqs():
+    return await get_all_faq()
+
+
+@router.post("/faq/")
+async def create_faq_question(faq: FrequentlyAskedQuestion = Body(...)):
+    return await create_faq(faq)
+
+
+@router.put("/faq/{faq_id}")
+async def update_faq_question(faq_id: str, faq: FrequentlyAskedQuestion = Body(...)):
+    return await update_faq(faq_id, faq)
+
+
+@router.delete("/faq/{faq_id}")
+async def delete_faq_question(faq_id: str):
+    return await delete_faq(faq_id)
 
 
 @router.post("/upload/")
