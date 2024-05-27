@@ -52,11 +52,13 @@ async def get_all_users():
         cursor = await users_collection.find().to_list(length=None)
 
         for user in cursor:
-            users_dict[user["username"]] = {
+            users_dict[user["email"]] = {
                 "id": user["_id"],
-                "username": user["username"],
-                "password": user["password"],
+                "firstName": user["firstName"],
+                "lastName": user["lastName"],
                 "email": user["email"],
+                "password": user["password"],
+                "age": user["age"],
                 "country": user["country"],
                 "state": user["state"],
             }
