@@ -43,7 +43,7 @@ def test_can_call_endpoint():
 async def test_can_create_question():
     payload = {
         "question": "Qué hace NEORIS?",
-        "userId": "82d00a97-d923-4c5a-bc8e-e1684eff66a9"
+        "userId": "9739f411-76c8-4260-9217-a8b4b32b299a"
     }
     create_question_response = requests.post(f'{ENDPOINT}/question',
                                              json=payload)
@@ -59,7 +59,7 @@ async def test_can_create_question():
 
 @pytest.mark.asyncio(scope="session")
 async def test_can_get_response():
-    user_id = "82d00a97-d923-4c5a-bc8e-e1684eff66a9"
+    user_id = "9739f411-76c8-4260-9217-a8b4b32b299a"
     response = requests.get(f'{ENDPOINT}/response/{user_id}')
     assert response.status_code == 200
 
@@ -74,7 +74,7 @@ async def test_can_get_response():
 
 
 def test_can_get_user_history():
-    user_id = "664c3ad9a7cab405d3c59696"
+    user_id = "9739f411-76c8-4260-9217-a8b4b32b299a"
     response = requests.get(f'{ENDPOINT}/history/{user_id}')
     assert response.status_code == 200
     data = response.json()
