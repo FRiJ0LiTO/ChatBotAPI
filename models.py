@@ -7,20 +7,24 @@ from datetime import datetime
 
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias="_id")
-    username: str = Field(...)
-    password: str = Field(...)
+    firstName: str = Field(...)
+    lastName: str = Field(...)
     email: EmailStr = Field(...)
+    password: str = Field(...)
+    age: int = Field(...)
     country: str = Field(...)
     state: str = Field(...)
 
     class Config:
         json_schema_extra = {
             "example": {
-                "username": "Juan",
-                "password": "password",
-                "email": "juan@gmail.com",
+                "firstName": "John",
+                "lastName": "Doe",
+                "email": "example@example.com",
+                "password": "123456",
+                "age": 30,
                 "country": "Mexico",
-                "state": "CDMX",
+                "state": "CDMX"
             }
         }
 
