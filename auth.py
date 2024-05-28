@@ -6,11 +6,11 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from models import Question
+from models import Question, User as ModelUser
 import shutil
 import os
 from dotenv import load_dotenv
-from database import get_all_users
+from database import get_all_users, create_user
 
 router = APIRouter()
 
@@ -107,6 +107,11 @@ async def get_current_active_user(
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return User(email=current_user.email, role=current_user.role, disabled=current_user.disabled)
+
+
+@router.post("/register")
+async def register_user(user: ModelUser = Body(...)):
+    return await create_user(user)
 
 
 @router.post("/token")

@@ -17,11 +17,6 @@ async def root():
     return {"message": "Welcome"}
 
 
-@router.post("/register")
-async def register_user(user: ModelUser = Body(...)):
-    return await create_user(user)
-
-
 @router.get("/users")
 async def get_users(current_user: Annotated[User, Depends(get_current_active_user)]):
     if current_user.role != "admin":
