@@ -111,7 +111,7 @@ async def get_current_active_user(
 
 @router.post("/register")
 async def register_user(user: ModelUser = Body(...)):
-    return await create_user(user_data)
+    return await create_user(user)
 
 
 @router.post("/token")
