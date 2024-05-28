@@ -35,8 +35,8 @@ class TokenData(BaseModel):
 
 
 class User(BaseModel):
-    email: str
-    full_name: str | None = None
+    email: str | None = None
+    role: str
     disabled: bool | None = None
 
 
@@ -44,7 +44,6 @@ class UserInDB(User):
     id: str
     firstName: str
     lastName: str
-    email: str | None = None
     password: str
     age: int
     country: str
@@ -103,11 +102,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[UserInDB, Depends(get_current_user)],
 ):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+    return User(email=current_user.email, role=current_user.role, disabled=current_user.disabled)
 
 
 @router.post("/token")
@@ -124,7 +123,8 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"id": user.id, "email": user.email}, expires_delta=access_token_expires
+        data={"id": user.id, "email": user.email, "role": user.role},
+        expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
