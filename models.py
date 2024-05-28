@@ -14,7 +14,7 @@ class User(BaseModel):
     age: int = Field(...)
     country: str = Field(...)
     state: str = Field(...)
-    role: str = Field(default='user'),
+    role: str = Field(default='user')
     disabled: bool = Field(default=False)
 
     class Config:
