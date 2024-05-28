@@ -61,6 +61,8 @@ async def get_all_users():
                 "age": user["age"],
                 "country": user["country"],
                 "state": user["state"],
+                "role": user["role"],
+                "disabled": user["disabled"]
             }
 
         return users_dict
