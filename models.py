@@ -14,6 +14,8 @@ class User(BaseModel):
     age: int = Field(...)
     country: str = Field(...)
     state: str = Field(...)
+    role: str = Field(default='user'),
+    disabled: bool = Field(default=False)
 
     class Config:
         json_schema_extra = {
@@ -24,7 +26,9 @@ class User(BaseModel):
                 "password": "123456",
                 "age": 30,
                 "country": "Mexico",
-                "state": "CDMX"
+                "state": "CDMX",
+                "role": "user",
+                "disabled": False
             }
         }
 
