@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Body, HTTPException, status, File, UploadFile
+from fastapi import APIRouter, Body, HTTPException, status, File, UploadFile, Depends
 from models import User, Question, FrequentlyAskedQuestion
 from database import (create_user, get_all_users, create_question, get_response,
                       get_user_questions, get_all_faq, create_faq, update_faq,
                       delete_faq)
 import os
 import shutil
+from typing import Annotated
 from bson import ObjectId
+from auth import User, get_current_active_user
 
 router = APIRouter()
 
@@ -21,22 +23,25 @@ async def register_user(user: User = Body(...)):
 
 
 @router.get("/users")
-async def get_users():
+async def get_users(current_user: Annotated[User, Depends(get_current_active_user)]):
     return await get_all_users()
 
 
 @router.post("/question")
-async def create_user_question(question: Question = Body(...)):
+async def create_user_question(current_user: Annotated[User, Depends(get_current_active_user)],
+                               question: Question = Body(...)):
     return await create_question(question)
 
 
 @router.get("/response/{user_id}")
-async def get_user_response(user_id: str):
+async def get_user_response(current_user: Annotated[User, Depends(get_current_active_user)],
+                            user_id: str):
     return await get_response(user_id)
 
 
 @router.get("/history/{user_id}")
-async def get_history(user_id: str):
+async def get_history(current_user: Annotated[User, Depends(get_current_active_user)],
+                      user_id: str):
     return await get_user_questions(user_id)
 
 
