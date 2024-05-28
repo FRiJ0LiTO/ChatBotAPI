@@ -3,6 +3,7 @@ from typing import Annotated
 import jwt
 from fastapi import APIRouter, Body, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
 from jwt.exceptions import InvalidTokenError
 from passlib.context import CryptContext
 from pydantic import BaseModel
@@ -111,7 +112,7 @@ async def get_current_active_user(
 
 @router.post("/register")
 async def register_user(user: ModelUser = Body(...)):
-    return await create_user(user)
+    return await create_user(jsonable_encoder(user_data))
 
 
 @router.post("/token")
