@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, HTTPException, status, File, UploadFile, Depends
-from models import User, Question, FrequentlyAskedQuestion
+from models import User as ModelUser, Question, FrequentlyAskedQuestion
 from database import (create_user, get_all_users, create_question, get_response,
                       get_user_questions, get_all_faq, create_faq, update_faq,
                       delete_faq)
@@ -18,30 +18,42 @@ async def root():
 
 
 @router.post("/register")
-async def register_user(user: User = Body(...)):
+async def register_user(user: ModelUser = Body(...)):
     return await create_user(user)
 
 
 @router.get("/users")
 async def get_users(current_user: Annotated[User, Depends(get_current_active_user)]):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
     return await get_all_users()
 
 
 @router.post("/question")
 async def create_user_question(current_user: Annotated[User, Depends(get_current_active_user)],
                                question: Question = Body(...)):
+    if current_user.role not in ["admin", "user"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
     return await create_question(question)
 
 
 @router.get("/response/{user_id}")
 async def get_user_response(current_user: Annotated[User, Depends(get_current_active_user)],
                             user_id: str):
+    if current_user.role not in ["admin", "user"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
     return await get_response(user_id)
 
 
 @router.get("/history/{user_id}")
 async def get_history(current_user: Annotated[User, Depends(get_current_active_user)],
                       user_id: str):
+    if current_user.role not in ["admin", "user"]:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
     return await get_user_questions(user_id)
 
 
