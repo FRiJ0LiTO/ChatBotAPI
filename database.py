@@ -42,6 +42,24 @@ async def create_user(user: User):
         return str(e)
 
 
+async def switch_disable_user(user_id: str, enable: bool):
+    """
+    Method to logout a user
+    :param user_id: User ID
+    :param enable: A boolean to enable or disable the user
+    :return: A message with the user logged out
+    """
+    try:
+        query = {"_id": user_id}
+        new_values = {"$set": {"disabled": enable}}
+        await users_collection.update_one(query, new_values)
+
+        message = "Disconnected successfully" if enable else "Connected successfully"
+        return {"message": message}
+    except Exception as e:
+        return str(e)
+
+
 async def get_all_users():
     """
     Method to get all the questions and answers from a user

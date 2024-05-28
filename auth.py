@@ -11,7 +11,7 @@ from models import Question, User as ModelUser
 import shutil
 import os
 from dotenv import load_dotenv
-from database import get_all_users, create_user
+from database import get_all_users, create_user, switch_disable_user
 
 router = APIRouter()
 
@@ -132,4 +132,14 @@ async def login_for_access_token(
         data={"id": user.id, "email": user.email, "role": user.role},
         expires_delta=access_token_expires
     )
+    await switch_disable_user(user.id, False)
     return Token(access_token=access_token, token_type="bearer")
+
+
+@router.put("/logout")
+async def logout(user_id: str):
+    """
+    Method to logout a user
+    :return: A message with the user logged out
+    """
+    return await switch_disable_user(user_id, True)
