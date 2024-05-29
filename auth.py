@@ -136,7 +136,7 @@ async def login_for_access_token(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.put("/logout")
+@router.put("/logout/{user_id}")
 async def logout(user_id: str):
     """
     Method to logout a user
