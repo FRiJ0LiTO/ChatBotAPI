@@ -30,7 +30,7 @@ def extract_text_from_pdf(pdf_path) -> None:
     contenido = os.listdir(pdf_path)
     for fichero in contenido:
         text = extract_text(os.path.join(pdf_path, fichero))
-        with open('train_data/NEORIS.txt', 'a', encoding='utf-8') as f:
+        with open('train_data/data.txt', 'a', encoding='utf-8') as f:
             f.write(text)
 
 
@@ -57,7 +57,7 @@ def train_model():
     
     Helpful Answer:"""
 
-    loader = TextLoader("train_data/NEORIS.txt", encoding='utf-8')
+    loader = TextLoader("train_data/data.txt", encoding='utf-8')
 
     docs = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000,
