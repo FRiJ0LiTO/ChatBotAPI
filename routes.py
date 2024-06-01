@@ -4,7 +4,8 @@ from models import User as ModelUser, Question, FrequentlyAskedQuestion
 from database import (create_user, get_all_users, create_question,
                       get_response,
                       get_user_questions, get_all_faq, create_faq, update_faq,
-                      delete_faq)
+                      delete_faq, get_active_users, get_total_questions,
+                      get_users_by_age, questions_by_day)
 import os
 import shutil
 from typing import Annotated
@@ -137,6 +138,56 @@ async def delete_faq_question(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="You do not have the necessary permissions")
     return await delete_faq(faq_id)
+
+
+@router.get("/active/users")
+async def get_all_active_users(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Method to get all the active users
+    :return: A list with all the active users
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
+    return await get_active_users()
+
+
+@router.get("/total/questions")
+async def get_all_questions(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Method to get all the questions from the database
+    :return: A list with all the questions
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
+    return await get_total_questions()
+
+
+@router.get("/users/age")
+async def get_users_range_age(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Method to get the users by range of age
+    :param current_user: Current user making the request
+    :return: A dictionary with the users by range of age
+    """
+    if current_user.role != "admin":
+        return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
+    return await get_users_by_age()
+
+
+@router.get("/questions/day")
+async def get_questions_by_day(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Method to get the questions by day
+    :param current_user: Current user making the request
+    :return: A list with the questions by day
+    """
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="You do not have the necessary permissions")
+    return await questions_by_day()
 
 
 @router.post("/upload/")

@@ -6,6 +6,8 @@ from own_gpt import model_response
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 from pymongo.errors import PyMongoError
+from pymongo import ASCENDING
+from datetime import datetime
 
 load_dotenv()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -228,4 +230,117 @@ async def delete_faq(faq_id: str):
         return {"message": f"FAQ with ID {faq_id} deleted successfully"}
     except PyMongoError as e:
         return {"error": str(e)}
+
+
+async def get_active_users():
+    """
+    Method to get all the active users
+    :return: A list with all the active users
+    """
+    try:
+        query = {"disabled": False}
+        response = await users_collection.count_documents(query)
+
+        return {"activeUsers": response}
+    except Exception as e:
+        return str(e)
+
+
+async def get_total_questions():
+    """
+    Method to get the total number of questions
+    :return: The total number of questions
+    """
+    try:
+        response = await questions_collection.count_documents({})
+
+        return {"totalQuestions": response}
+    except Exception as e:
+        return str(e)
+
+
+async def get_users_by_age():
+    """
+    Method to get the total number of users by range of age
+    :return: A dictionary with the total number of users by range of age
+    """
+    try:
+        users_by_age = {
+            "0-18": 0,
+            "19-30": 0,
+            "31-50": 0,
+            "51-65": 0,
+            "66+": 0
+        }
+
+        cursor = await users_collection.find().to_list(length=None)
+
+        for user in cursor:
+            if 0 <= user["age"] <= 18:
+                users_by_age["0-18"] += 1
+            elif 19 <= user["age"] <= 30:
+                users_by_age["19-30"] += 1
+            elif 31 <= user["age"] <= 50:
+                users_by_age["31-50"] += 1
+            elif 51 <= user["age"] <= 65:
+                users_by_age["51-65"] += 1
+            else:
+                users_by_age["66+"] += 1
+    except Exception as e:
+        return str(e)
+
+    return [{"age": k, "count": v} for k, v in users_by_age.items()]
+
+
+async def questions_by_day():
+    """
+    Method to get the total number of questions by day
+    :return: A list with the total number of questions by day
+    """
+    try:
+        pipeline = [
+            {
+                "$match": {
+                    "date": {"$regex": r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"}
+                }
+            },
+            {
+                "$addFields": {
+                    "date_truncated": {
+                        "$substr": ["$date", 0, 19]
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "date": {
+                        "$dateFromString": {
+                            "dateString": "$date_truncated",
+                            "format": "%Y-%m-%dT%H:%M:%S"
+                        }
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}},
+                    "count": {"$sum": 1}
+                }
+            },
+            {
+                "$sort": {"_id": ASCENDING}
+            }
+        ]
+
+        cursor = questions_collection.aggregate(pipeline)
+        result = await cursor.to_list(length=None)
+
+        formatted_result = [{"date": item["_id"], "count": item["count"]} for item in result]
+        return formatted_result
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+
 
