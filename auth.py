@@ -129,7 +129,7 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"id": user.id, "email": user.email, "role": user.role},
+        data={"id": user.id, "name": user.firstName, "email": user.email, "role": user.role},
         expires_delta=access_token_expires
     )
     await switch_disable_user(user.id, False)
