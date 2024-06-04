@@ -12,6 +12,7 @@ origins = [
     "http://localhost:5173",
     "http://10.21.19.133",
     "http://192.168.155.230",
+    "https://neora.netlify.app",
 ]
 
 app.add_middleware(
