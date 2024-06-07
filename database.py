@@ -1,6 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.encoders import jsonable_encoder
-from fastapi import HTTPException
 import os
 from models import User, Question, FrequentlyAskedQuestion, EditQuestion
 from own_gpt import model_response
@@ -16,6 +15,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 client_url = os.getenv('ATLAS_URI')
 database_name = os.getenv('DB_NAME')
 
+
 client = AsyncIOMotorClient(client_url)
 database = client[database_name]
 questions_collection = database["questions"]
@@ -28,29 +28,49 @@ def get_password_hash(password):
 
 
 async def create_user(user: User):
+    """
+    Method to create a new user
+    :param user: User to be created
+    :return: User created
+    """
     try:
+        # Hash the password
         user.password = get_password_hash(user.password)
+        # Insert the user into the database, collection "neoris"
         await users_collection.insert_one(jsonable_encoder(user))
+
         return user
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def switch_disable_user(user_id: str, enable: bool):
+    """
+    Method to logout a user
+    :param user_id: User ID
+    :param enable: A boolean to enable or disable the user
+    :return: A message with the user logged out
+    """
     try:
         query = {"_id": user_id}
         new_values = {"$set": {"disabled": enable}}
         await users_collection.update_one(query, new_values)
+
         message = "Disconnected successfully" if enable else "Connected successfully"
         return {"message": message}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_all_users():
+    """
+    Method to get all the questions and answers from a user
+    :return: A list with all the questions and answers from the user
+    """
     try:
         users_dict = {}
         cursor = await users_collection.find().to_list(length=None)
+
         for user in cursor:
             users_dict[user["email"]] = {
                 "id": user["_id"],
@@ -64,116 +84,186 @@ async def get_all_users():
                 "role": user["role"],
                 "disabled": user["disabled"]
             }
+
         return users_dict
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def create_question(question: Question):
+    """
+    Method to create a new question and associate it with a user
+    :param question: Question to be created
+    :return: User with the new question associated
+    """
     try:
+        # Insert the question into the database, collection "questions"
         await questions_collection.insert_one(jsonable_encoder(question))
+
         return question
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_response(user_id: str):
+    """
+    Method to get the response from the model
+    :param user_id: User ID
+    :return: Dictionary with the response and the question
+    """
     try:
+        # Find the most recent question from the user
         user_question = await questions_collection.find_one(
             {"userId": user_id},
             sort=[("date", -1)]
         )
-        if not user_question:
-            raise HTTPException(status_code=404, detail="Question not found")
 
+        # Find the question ID
         user_question_id = user_question["_id"]
+
+        # Obtain the response from the model
         chat_response = model_response(user_question["question"])
+
+        # Create a query to find the question by its ID
         query = {"_id": user_question_id}
+        # Create a new value to push the new answer to the question
         new_values = {"$set": {"answer": chat_response}}
+        # Update the question with the new answer
         await questions_collection.update_one(query, new_values)
 
-        return {"_id": user_question_id, "response": chat_response,
-                "question": user_question["question"], "userId": user_id}
+        return {"_id": user_question_id,
+                "response": chat_response,
+                "question": user_question["question"],
+                "userId": user_id}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_user_questions(user_id: str):
+    """
+    Method to get all the questions and answers from a user
+    :param user_id: User ID
+    :return: A list with all the questions and answers from the user
+    """
     try:
         history = []
-        cursor = await questions_collection.find({"userId": user_id}).to_list(
-            length=100)
+        cursor = await questions_collection.find(
+            {"userId": user_id}
+        ).to_list(length=100)
+
         for question in cursor:
-            question['_id'] = str(question['_id'])
+            question['_id'] = str(question['_id'])  # Convert ObjectId to string
             history.append(question)
+
         return history
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_all_faq():
+    """
+
+    :return:
+    """
     try:
         all_faq = []
         cursor = await faq_collection.find().to_list(length=None)
+
         for question in cursor:
-            question['_id'] = str(question['_id'])
+            question['_id'] = str(
+                question['_id'])  # Convert ObjectId to string
             all_faq.append(question)
+
         return all_faq
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def create_faq(faq: FrequentlyAskedQuestion):
+    """
+    Creates a new FAQ document in the collection.
+
+    :param faq: The FAQ object to be created.
+    :return: The created FAQ object or an error message.
+    """
     try:
         await faq_collection.insert_one(jsonable_encoder(faq))
         return faq
     except PyMongoError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
 
 
 async def update_faq(faq_id: str, faq: EditQuestion):
+    """
+    Updates an existing FAQ document with new data.
+    :param faq_id: The ID of the FAQ to be updated.
+    :param faq: The new FAQ data.
+    :return: The update result or an error message.
+    """
     try:
         query = {"_id": faq_id}
         new_faq = jsonable_encoder(faq)
-        new_values = {"$set": {"question": new_faq["question"],
-                               "answer": new_faq["answer"]}}
+        new_values = {
+            "$set": {"question": new_faq["question"], "answer": new_faq["answer"]}
+        }
         response = await faq_collection.update_one(query, new_values)
         if response.matched_count == 0:
-            raise HTTPException(status_code=404, detail="FAQ not found")
+            return {"error": "FAQ not found"}
         return {"message": f"FAQ with ID {faq_id} updated successfully"}
     except PyMongoError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
 
 
 async def delete_faq(faq_id: str):
+    """
+    Deletes an existing FAQ document.
+
+    :param faq_id: The ID of the FAQ to be deleted.
+    :return: The delete result or an error message.
+    """
     try:
         query = {"_id": faq_id}
         response = await faq_collection.delete_one(query)
         if response.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="FAQ not found")
+            return {"error": "FAQ not found"}
         return {"message": f"FAQ with ID {faq_id} deleted successfully"}
     except PyMongoError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
 
 
 async def get_active_users():
+    """
+    Method to get all the active users
+    :return: A list with all the active users
+    """
     try:
         query = {"disabled": False}
         response = await users_collection.count_documents(query)
+
         return {"activeUsers": response}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_total_questions():
+    """
+    Method to get the total number of questions
+    :return: The total number of questions
+    """
     try:
         response = await questions_collection.count_documents({})
+
         return {"totalQuestions": response}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
 
 
 async def get_users_by_age():
+    """
+    Method to get the total number of users by range of age
+    :return: A dictionary with the total number of users by range of age
+    """
     try:
         users_by_age = {
             "0-18": 0,
@@ -182,7 +272,9 @@ async def get_users_by_age():
             "51-65": 0,
             "66+": 0
         }
+
         cursor = await users_collection.find().to_list(length=None)
+
         for user in cursor:
             if 0 <= user["age"] <= 18:
                 users_by_age["0-18"] += 1
@@ -195,28 +287,55 @@ async def get_users_by_age():
             else:
                 users_by_age["66+"] += 1
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return str(e)
+
     return [{"age": k, "count": v} for k, v in users_by_age.items()]
 
 
 async def questions_by_day():
+    """
+    Method to get the total number of questions by day
+    :return: A list with the total number of questions by day
+    """
     try:
         pipeline = [
-            {"$match": {
-                "date": {"$regex": r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"}}},
-            {"$addFields": {"date_truncated": {"$substr": ["$date", 0, 19]}}},
-            {"$addFields": {"date": {
-                "$dateFromString": {"dateString": "$date_truncated",
-                                    "format": "%Y-%m-%dT%H:%M:%S"}}}},
-            {"$group": {"_id": {
-                "$dateToString": {"format": "%Y-%m-%d", "date": "$date"}},
-                        "count": {"$sum": 1}}},
-            {"$sort": {"_id": ASCENDING}}
+            {
+                "$match": {
+                    "date": {"$regex": r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}"}
+                }
+            },
+            {
+                "$addFields": {
+                    "date_truncated": {
+                        "$substr": ["$date", 0, 19]
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "date": {
+                        "$dateFromString": {
+                            "dateString": "$date_truncated",
+                            "format": "%Y-%m-%dT%H:%M:%S"
+                        }
+                    }
+                }
+            },
+            {
+                "$group": {
+                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}},
+                    "count": {"$sum": 1}
+                }
+            },
+            {
+                "$sort": {"_id": ASCENDING}
+            }
         ]
+
         cursor = questions_collection.aggregate(pipeline)
         result = await cursor.to_list(length=None)
-        formatted_result = [{"date": item["_id"], "count": item["count"]} for
-                            item in result]
+
+        formatted_result = [{"date": item["_id"], "count": item["count"]} for item in result]
         return formatted_result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e)}
