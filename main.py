@@ -13,6 +13,7 @@ origins = [
     "http://10.21.19.133",
     "http://192.168.155.230",
     "https://neora.netlify.app",
+    "https://neora.vercel.app",
 ]
 
 app.add_middleware(
